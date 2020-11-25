@@ -4,6 +4,14 @@
 #define outputB 19
 #define button 2
 
+#define phasePin 6
+#define enablePin 7
+#define signal1 21
+#define signal2 20
+
+Motor motor(phasePin, enablePin, signal1, signal2);
+const int gearRatio = 131;
+
 int buttonPins[] = {29, 28, 27, 26, 25, 24, 23, 22, 18, 19, 2}; // All inputs
 int buttonPinsSize;
 int ledPins[] = {42, 43, 44, 45, 46, 47, 48, 49}; // All outputs
@@ -18,19 +26,19 @@ int desiredFloor;
 int Q = 1;
 
 bool isIdle = false;
-bool isMovingUp = false;
+bool isMoving = false;
 bool isMovingDown = false;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(0, INPUT);
   initPins();
+  initMotor();
   //aLastState = digitalRead(outputA);
 }
 
 void loop() {
-  startTime = micros();
-  desiredAngle = (analogRead(0)/1023.0)*360.0;
-  motor.setDutyCycle(PID(desiredAngle));
+
   floorSelection();
   //movingUp();
   //movingDown(); 
@@ -38,19 +46,17 @@ void loop() {
   changeStates();
   if(isIdle)
   {
-    idleState();
+    //idleState();
   }
-  if(isMovingUp)
+  /*if(isMovingUp)
   {
     
     movingUp();
-  }
-  if(isMovingDown)
+  }*/
+  if(isMoving)
   {
-    movingDown();
+    movingState();
   }
-  dt = micros() - startTime;
-  dt = dt / (1000000);
 }
 
 void initPins()
@@ -72,6 +78,13 @@ void initPins()
   }
 }
 
+void initMotor()
+{
+  attachInterrupt(digitalPinToInterrupt(signal1), signal1Change, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(signal2), signal2Change, CHANGE);
+  motor.gearRatio = gearRatio;
+}
+
 void changeStates()
 {
   if(digitalRead(buttonPins[0]) == HIGH)
@@ -80,10 +93,10 @@ void changeStates()
   }
   if(digitalRead(buttonPins[1]) == HIGH)
   {
-    isMovingUp = !isMovingUp;
+    isMoving = !isMoving;
   }
-  if(digitalRead(buttonPins[2]) == HIGH)
+  /*if(digitalRead(buttonPins[2]) == HIGH)
   {
     isMovingDown = !isMovingDown;
-  }
+  }*/
 }
