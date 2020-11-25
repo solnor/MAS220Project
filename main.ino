@@ -1,4 +1,5 @@
 #include <motorLib.h>
+#include <Queue.h>
 
 #define outputA 18
 #define outputB 19
@@ -12,22 +13,20 @@
 Motor motor(phasePin, enablePin, signal1, signal2);
 const int gearRatio = 131;
 
+Queue upwardsQueue;
+Queue downwardsQueue;
+
+int *queuePointer = 0;
+int floorState[] = {0, 0, 0, 0};
+
 int buttonPins[] = {29, 28, 27, 26, 25, 24, 23, 22, 18, 19, 2}; // All inputs
 int buttonPinsSize;
 int ledPins[] = {42, 43, 44, 45, 46, 47, 48, 49}; // All outputs
 int ledPinsSize;
 
-//encoder variables
-int counter = 0;
-int aState;
-int aLastState;
-int encoderState = 0;
-int desiredFloor;
-int Q = 1;
-
-bool isIdle = false;
-bool isMoving = false;
-bool isMovingDown = false;
+bool idle = false;
+bool moving = false;
+bool movingUp = true;
 
 void setup() {
   Serial.begin(115200);
@@ -44,7 +43,7 @@ void loop() {
   //movingDown(); 
 
   changeStates();
-  if(isIdle)
+  if(idle)
   {
     //idleState();
   }
@@ -53,7 +52,7 @@ void loop() {
     
     movingUp();
   }*/
-  if(isMoving)
+  if(moving)
   {
     movingState();
   }
@@ -89,11 +88,11 @@ void changeStates()
 {
   if(digitalRead(buttonPins[0]) == HIGH)
   {
-    isIdle = !isIdle;
+    idle = !idle;
   }
   if(digitalRead(buttonPins[1]) == HIGH)
   {
-    isMoving = !isMoving;
+    moving = !moving;
   }
   /*if(digitalRead(buttonPins[2]) == HIGH)
   {

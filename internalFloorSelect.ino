@@ -1,9 +1,14 @@
-
+//encoder variables
+int counter = 0;
+int aState;
+int aLastState;
+int encoderState = 0;
+int Q = 1;
 
 void floorSelection() {
-
-
-aState = digitalRead(outputA);
+  int desiredFloor = -1;
+  
+  aState = digitalRead(outputA);
   //Code picks up that the encoder is rotated and which way it rotates 
   if (aState != aLastState) {
 
@@ -59,10 +64,25 @@ aState = digitalRead(outputA);
       Serial.println("4th floor");
       Q = 0;
     }
-   
+    
+    queueInsert(desiredFloor);
   }
-
+  
   if (digitalRead(button) == 0 && Q == 0) {
     Q = 1;
+  }
+}
+
+void queueInsert(int desiredFloor)
+{
+  if(movingUp)
+  {
+    upwardsQueue.insert(desiredFloor);
+    upwardsQueue.sort();
+    for(int i = 0; i < upwardsQueue.getSize(); i++)
+    {
+      Serial.print(*(upwardsQueue.getArrayPointer()+i));
+    }
+    Serial.println();
   }
 }
