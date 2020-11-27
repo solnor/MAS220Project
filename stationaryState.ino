@@ -2,18 +2,10 @@
 const int OPEN = 1;
 const int CLOSE = 0;
 
-bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
+//bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
 
 void stationaryState()
 {
-  
-  if(analogRead(0) >= 1023/2)
-  {
-    stationary = false;
-    moving = true;
-  }
-  //Serial.println("Stationary state");
-  
   if(!doorState && arrivedAtFloor)
   {
     runStepper(OPEN);
@@ -28,28 +20,26 @@ void stationaryState()
       (*ptrs[i]).remove(currentFloor);
     }
     arrivedAtFloor = false;
-    //Also clear external requests from that floor
+    //TODO: Also clear external requests from that floor
   }
   if(doorState && !arrivedAtFloor)
   {
     runStepper(CLOSE);
   }
 
-  desiredFloor = findNextDesiredFloor();
-  
-  if(desiredFloor == currentFloor)
+  if(!doorState && !arrivedAtFloor)
   {
-    arrivedAtFloor = true;
+    //desiredFloor = findNextDesiredFloor();
+    if(desiredFloor == currentFloor)
+    {
+      arrivedAtFloor = true;
+    }
+    else if (desiredFloor > -1)
+    {
+      stationary = false;
+      moving = true;
+    }
   }
-  else if (desiredFloor != -1)
-  {
-    stationary = false;
-    moving = true;
-  }
-  //If request in same floor open doors, if not on same floor, move elevator
-  
-  
-  
 }
 // Enable door movement, start timer
 
@@ -86,6 +76,8 @@ int findNextDesiredFloor()
   bool desiredFloorFound = false;
   int multiplier = 1;
   Queue *queuePointer = 0;
+
+  setDirection();
   
   if(movingUp)
   {
@@ -97,26 +89,32 @@ int findNextDesiredFloor()
     queuePointer = &downwardsQueue;
     multiplier = -1;
   }
-  while(queueIterator < (*queuePointer).getSize())
+  for(int i = 0; i<(*queuePointer).getSize(); i++)
   {
-    if(multiplier * *((*queuePointer).getArrayPointer()+queueIterator) >= multiplier * currentFloor)
+    if(multiplier * *((*queuePointer).getArrayPointer()+i) >= multiplier * currentFloor)
     {
-      desiredFloorFound = true;
-      break;
+      return *((*queuePointer).getArrayPointer()+i);;
     }
-    queueIterator++;
   }
-  if(desiredFloorFound)
+  return -1;
+}
+
+void setDirection()
+{
+  if(movingUp)
   {
-    _desiredFloor = *((*queuePointer).getArrayPointer()+queueIterator);
-  }
-  else
-  {
-    if(currentFloor != 0)
+    
+    if(upwardsQueue.getHighestValue() < 0 && downwardsQueue.getHighestValue() >= 0)
     {
+      
       movingUp = false;
     }
-    queueIterator = 0;
   }
-  return _desiredFloor;
+  if(!movingUp)
+  {
+    if(upwardsQueue.getHighestValue() >= 0 && downwardsQueue.getHighestValue() < 0)
+    {
+      movingUp = true;
+    } 
+  }
 }

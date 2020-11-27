@@ -46,7 +46,7 @@ void floorSelection() {
   //Enables the button to choose what floor you want to go to
   if (digitalRead(button) == 1 && Q == 1) {
     requestedFloor = encoderState;
-    Serial.print("you chose the ");
+    Serial.print("You chose the ");
 
     if (requestedFloor == 0) {
       Serial.println("1st floor");

@@ -36,14 +36,17 @@ bool stationary = true;
 bool moving = false;
 bool movingUp = true;
 
+int desiredFloor = 0;
+float desiredAngle = 0.0; // desired amount of rotation in degrees on the load axle
+bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
+
+
 void setup() {
-  TCCR4B = TCCR4B & 0b11111000 | 0x01;
   Serial.begin(115200);
   pinMode(0, INPUT);
   initPins();
   initMotor();
   doorStepperInit();
-  //aLastState = digitalRead(outputA);
 }
 
 void loop() {
@@ -51,7 +54,13 @@ void loop() {
   floorSelection();
   readButtonsSetState();
 
-  changeStates();
+  desiredFloor = findNextDesiredFloor();
+  if(desiredFloor >= 0 && !doorState)
+  {
+    desiredAngle = float(desiredFloor) * 360.0;
+    motor.setDutyCycle(PID(desiredAngle));
+  }
+
   if(stationary)
   {
     stationaryState();
@@ -74,6 +83,7 @@ void loop() {
 //    {
 //      Serial.print(*(downwardsQueue.getArrayPointer()+i));
 //    }
+//    Serial.print(" movingUp: ");Serial.print(movingUp);
 //    Serial.println();
 //  }
   
@@ -105,21 +115,6 @@ void initMotor()
   attachInterrupt(digitalPinToInterrupt(signal1), signal1Change, CHANGE);
   attachInterrupt(digitalPinToInterrupt(signal2), signal2Change, CHANGE);
   motor.gearRatio = gearRatio;
-  motor.powerOff();
-}
-
-void changeStates()
-{
-  /*if(digitalRead(buttonPins[0]) == HIGH)
-  {
-    stationary = !stationary;
-  }
-  if(digitalRead(buttonPins[1]) == HIGH)
-  {
-    moving = !moving;
-  }*/
-  /*if(digitalRead(buttonPins[2]) == HIGH)
-  {
-    isMovingDown = !isMovingDown;
-  }*/
+  TCCR4B = TCCR4B & 0b11111000 | 0x01;
+  motor.setSpeed(0);
 }
