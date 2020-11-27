@@ -6,7 +6,7 @@ int encoderState = 0;
 int Q = 1;
 
 void floorSelection() {
-  int desiredFloor = -1;
+  int requestedFloor = -1;
   
   aState = digitalRead(outputA);
   //Code picks up that the encoder is rotated and which way it rotates 
@@ -45,18 +45,18 @@ void floorSelection() {
 
   //Enables the button to choose what floor you want to go to
   if (digitalRead(button) == 1 && Q == 1) {
-    desiredFloor = encoderState;
+    requestedFloor = encoderState;
     Serial.print("you chose the ");
 
-    if (desiredFloor == 0) {
+    if (requestedFloor == 0) {
       Serial.println("1st floor");
       Q = 0;
     }
-    else if (desiredFloor == 1) {
+    else if (requestedFloor == 1) {
       Serial.println("2nd floor");
       Q = 0;
     }
-    else if (desiredFloor == 2) {
+    else if (requestedFloor == 2) {
       Serial.println("3rd floor");
       Q = 0;
     }
@@ -65,7 +65,7 @@ void floorSelection() {
       Q = 0;
     }
     
-    queueInsert(desiredFloor);
+    queueInsert(requestedFloor);
   }
   
   if (digitalRead(button) == 0 && Q == 0) {
@@ -73,16 +73,42 @@ void floorSelection() {
   }
 }
 
-void queueInsert(int desiredFloor)
+void queueInsert(int value)
 {
+  Queue *queuePointer = 0;
+  
   if(movingUp)
   {
-    upwardsQueue.insert(desiredFloor);
-    upwardsQueue.sort();
-    for(int i = 0; i < upwardsQueue.getSize(); i++)
+    if(value >= currentFloor)
     {
-      Serial.print(*(upwardsQueue.getArrayPointer()+i));
+      queuePointer = &upwardsQueue;
     }
-    Serial.println();
+    else
+    {
+      queuePointer = &downwardsQueue;
+    }
+    (*(queuePointer)).insert(value);
+    (*(queuePointer)).sort();
+    if(queuePointer == &downwardsQueue)
+    {
+      downwardsQueue.flip();
+    }
+  }
+  else
+  {
+    if(value <= currentFloor)
+    {
+      queuePointer = &downwardsQueue;
+    }
+    else
+    {
+      queuePointer = &upwardsQueue;
+    }
+    (*(queuePointer)).insert(value);
+    (*(queuePointer)).sort();
+    if(queuePointer == &downwardsQueue)
+    {
+      downwardsQueue.flip();
+    }
   }
 }
