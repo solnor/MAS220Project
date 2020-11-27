@@ -52,7 +52,6 @@ void readButtonsSetState() {
     buttonState[5] = 1; // The "down"-button on floor 3
   }
   floorState[3] = buttonState[5];
-
 }
 
 void printFloorStates() {//For some reason, printing all values at once messes up the serial monitor,
@@ -105,11 +104,25 @@ void requestHandler()
     {
       if(floorState[i] == 1)
       {
-        downwardsQueue.insert(i);
+        if(upwardsQueue.getHighestValue() < i)
+        {
+          upwardsQueue.insert(i);
+        }
+        else
+        {
+          downwardsQueue.insert(i);
+        }
       }
       else if(floorState[i] == 2)
       {
-        upwardsQueue.insert(i);
+        if(downwardsQueue.getHighestValue() < i)
+        {
+          downwardsQueue.insert(i);
+        }
+        else
+        {
+          upwardsQueue.insert(i);
+        }
       }
       else if(floorState[i] == 3)
       {

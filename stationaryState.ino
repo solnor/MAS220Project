@@ -1,18 +1,22 @@
 //Open/close door
 const int OPEN = 1;
 const int CLOSE = 0;
-
+//This only needs to be an int since it will be reset before it reaches 2^32
+unsigned int initialTime = 0;
+unsigned int doorTimer = 0;
 //bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
 
 void stationaryState()
 {
   if(!doorState && arrivedAtFloor)
   {
+    initialTime = millis();
     runStepper(OPEN);
   }
   
   if(doorState && arrivedAtFloor)
   {
+    doorTimer = millis();
     Queue *ptrs[] = {&upwardsQueue, &downwardsQueue};
     //Deletes element with value of currentFloor from both queues
     for (int i = 0; i < sizeof(ptrs) / sizeof(ptrs[0]); i++)
@@ -20,9 +24,9 @@ void stationaryState()
       (*ptrs[i]).remove(currentFloor);
     }
     arrivedAtFloor = false;
-    //TODO: Also clear external requests from that floor
+    clearFloorState();
   }
-  if(doorState && !arrivedAtFloor)
+  if(doorState && !arrivedAtFloor && millis()-doorTimer>1000)
   {
     runStepper(CLOSE);
   }
@@ -104,17 +108,24 @@ void setDirection()
   if(movingUp)
   {
     
-    if(upwardsQueue.getHighestValue() < 0 && downwardsQueue.getHighestValue() >= 0)
+    if(upwardsQueue.getHighestValue() < 0 && downwardsQueue.getHighestValue() >= 0 && currentFloor != 0)
     {
-      
+      movingUp = false;
+    }
+    else if(upwardsQueue.getHighestValue() >= 0 && downwardsQueue.getHighestValue() >= 0 && currentFloor > upwardsQueue.getHighestValue())
+    {
       movingUp = false;
     }
   }
-  if(!movingUp)
+  else if(!movingUp)
   {
-    if(upwardsQueue.getHighestValue() >= 0 && downwardsQueue.getHighestValue() < 0)
+    if(upwardsQueue.getHighestValue() >= 0 && downwardsQueue.getHighestValue() < 0 && currentFloor != 4)
     {
       movingUp = true;
-    } 
+    }
+    else if(upwardsQueue.getHighestValue() >= 0 && downwardsQueue.getHighestValue() >= 0 && currentFloor < downwardsQueue.getHighestValue())
+    {
+      movingUp = true;
+    }
   }
 }
