@@ -21,14 +21,6 @@ unsigned long prevTime = 0;
 long stepInterval = 8000; //Microseconds between each step, lower value increases speed
 int steps = 0;
 
-//Open/close door
-const int OPEN = 1;
-const int CLOSE = 0;
-bool doorState = 0; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
-
-
-
-
 //void loop() {
 //runStepper(OPEN); //OPEN turns the stepper one rev, CLOSE turns it back on rev.
 //}
@@ -50,7 +42,7 @@ void runStepper(int open_close) {
         i++;
         steps++;
         if ( steps == 400) {
-          doorState = 1;
+          doorState = true;
         }
         if ( i == 8) {
           i = 0;
@@ -68,7 +60,7 @@ void runStepper(int open_close) {
         i++;
         steps--;
         if ( steps == 0) {
-          doorState = 0;
+          doorState = false;
         }
         if ( i == 8) {
           i = 0;

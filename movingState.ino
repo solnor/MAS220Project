@@ -7,8 +7,9 @@ float previousAngle = 0.0;
 float desiredAngle = 0.0; // desired amount of rotation in degrees on the load axle
 
 int desiredFloor = 0;
-int iterator = 0;
+
 int p=0;
+bool arrivedAtFloor = false;
 
 void movingState(){
 //  if(millis() % 500 == 0)
@@ -25,30 +26,23 @@ void movingState(){
   //Temporary:
   currentFloor = round(motor.getAngle()/360.0);
   //NOTE: Hardcoded
-  if(checkIfArrived() && currentFloor == desiredFloor)
+  arrivedAtFloor = checkIfArrived();
+  if(arrivedAtFloor && currentFloor == desiredFloor)
   {
-    if(p == 0)
-    {
-      
-      Serial.print("Arrived at floor ");Serial.println(currentFloor);
+      motor.setSpeed(0);
+      Serial.print("Arrived at floor ");Serial.println(currentFloor+1);
       p++;
       //Remove later
-      iterator++;
+      queueIterator++;
       //
       stationary = true;
       moving = false;
-    }
   }
-  else
-  {
-    p = 0;
-  }
-  //////////////////////////////
 }
 
 bool checkIfArrived()
 {
-  if(motor.getAngle() >= desiredAngle - 1.5 && motor.getAngle() <= desiredAngle + 1.5)
+  if(motor.getAngle() >= desiredAngle - 2.0 && motor.getAngle() <= desiredAngle + 2.0)
   {
     return true;
   }

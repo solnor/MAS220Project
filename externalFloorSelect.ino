@@ -1,4 +1,4 @@
-int currentFloor = 2; //Which floor the elevator is currently at
+int currentFloor = 0; //Which floor the elevator is currently at
 int elevDirection; //-1: down, 0: stationary, 1: up
 int buttonState[] = {0, 0, 0, 0, 0, 0};
 int buttonInput[] = {0, 0, 0, 0, 0, 0};

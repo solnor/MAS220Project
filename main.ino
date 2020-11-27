@@ -23,6 +23,7 @@ const int gearRatio = 131;
 
 Queue upwardsQueue;
 Queue downwardsQueue;
+int queueIterator = 0;
 
 //int floorState[] = {0, 0, 0, 0};
 
@@ -36,6 +37,7 @@ bool moving = false;
 bool movingUp = true;
 
 void setup() {
+  TCCR4B = TCCR4B & 0b11111000 | 0x01;
   Serial.begin(115200);
   pinMode(0, INPUT);
   initPins();

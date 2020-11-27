@@ -9,13 +9,13 @@ float P, I, D;
 float sumOutput;
 float filteredD;
 float kP = 3,  kI = 0, kD = 0.010;
-float PLimit = 35, ILimit = 10,  DLimit = 40;
+float PLimit = 40, ILimit = 10,  DLimit = 40;
 
 
 int PID(float angleInput) { //Returns a value between 0 and 255;
   currentAngle = motor.getAngle();
   //Turns the motor off when the error is less than 1.5 degrees
-  if(abs(angleInput - currentAngle) < 1.5){
+  if(abs(angleInput - currentAngle) < 2.0){
     motor.powerOff();
   }else{
   motor.powerOn();

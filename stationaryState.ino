@@ -1,14 +1,55 @@
+//Open/close door
+const int OPEN = 1;
+const int CLOSE = 0;
 
+bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
 
 void stationaryState()
 {
-  desiredFloor = findNextDesiredFloor();
+  
   if(analogRead(0) >= 1023/2)
   {
     stationary = false;
     moving = true;
   }
   //Serial.println("Stationary state");
+  
+  if(!doorState && arrivedAtFloor)
+  {
+    runStepper(OPEN);
+  }
+  
+  if(doorState && arrivedAtFloor)
+  {
+    Queue *ptrs[] = {&upwardsQueue, &downwardsQueue};
+    //Deletes element with value of currentFloor from both queues
+    for (int i = 0; i < sizeof(ptrs) / sizeof(ptrs[0]); i++)
+    {
+      (*ptrs[i]).remove(currentFloor);
+    }
+    arrivedAtFloor = false;
+    //Also clear external requests from that floor
+  }
+  if(doorState && !arrivedAtFloor)
+  {
+    runStepper(CLOSE);
+  }
+
+  desiredFloor = findNextDesiredFloor();
+  
+  if(desiredFloor == currentFloor)
+  {
+    arrivedAtFloor = true;
+  }
+  else if (desiredFloor != -1)
+  {
+    stationary = false;
+    moving = true;
+  }
+  //If request in same floor open doors, if not on same floor, move elevator
+  
+  
+  
 }
 // Enable door movement, start timer
 
@@ -56,18 +97,18 @@ int findNextDesiredFloor()
     queuePointer = &downwardsQueue;
     multiplier = -1;
   }
-  while(iterator < (*queuePointer).getSize())
+  while(queueIterator < (*queuePointer).getSize())
   {
-    if(multiplier * *((*queuePointer).getArrayPointer()+iterator) >= multiplier * currentFloor)
+    if(multiplier * *((*queuePointer).getArrayPointer()+queueIterator) >= multiplier * currentFloor)
     {
       desiredFloorFound = true;
       break;
     }
-    iterator++;
+    queueIterator++;
   }
   if(desiredFloorFound)
   {
-    _desiredFloor = *((*queuePointer).getArrayPointer()+iterator);
+    _desiredFloor = *((*queuePointer).getArrayPointer()+queueIterator);
   }
   else
   {
@@ -75,7 +116,7 @@ int findNextDesiredFloor()
     {
       movingUp = false;
     }
-    iterator = 0;
+    queueIterator = 0;
   }
   return _desiredFloor;
 }
