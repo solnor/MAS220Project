@@ -60,7 +60,7 @@ void loop() {
     desiredAngle = float(desiredFloor) * 360.0;
     motor.setDutyCycle(PID(desiredAngle));
   }
-
+  elevatorIndicator();
   if(stationary)
   {
     stationaryState();

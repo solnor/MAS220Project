@@ -33,6 +33,27 @@ bool checkIfArrived()
   return false;
 }
 
+void elevatorIndicator()
+{
+  if(movingUp)
+  {
+    if(currentFloor != 0)
+    {
+      digitalWrite(ledPins[currentFloor-1], LOW);
+    }
+    digitalWrite(ledPins[currentFloor], HIGH);
+    
+  }
+  else
+  {
+    if(currentFloor != 4)
+    {
+      digitalWrite(ledPins[currentFloor+1], LOW);
+    }
+    digitalWrite(ledPins[currentFloor], HIGH);
+  }
+}
+
 //ISR
 void signal1Change()
 {

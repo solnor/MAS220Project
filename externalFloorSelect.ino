@@ -54,19 +54,6 @@ void readButtonsSetState() {
   floorState[3] = buttonState[5];
 }
 
-void printFloorStates() {//For some reason, printing all values at once messes up the serial monitor,
-  if (n < 4) {    //so each floor state must be printed in successive loops
-    Serial.print(floorState[n]);
-    Serial.print(" ");
-    n++;
-  }
-  if (n == 4) {
-    n = 0;
-    Serial.println();
-  }
-
-}
-
 void clearFloorState() {
   //Floor 0. Consider throwing this into some for loops later
   if ((floorState[0] != 0) && currentFloor == 0) { //Floor 0 has requests, and the elevator has arrived at that floor: req's are cleared
@@ -95,9 +82,6 @@ void clearFloorState() {
 
 void requestHandler()
 {
-  /*
-   * Noe rart her
-   */
   for(int i = 0; i<sizeof(floorState)/sizeof(floorState[0]); i++)
   {
     if(floorState[i] != 0)
@@ -112,6 +96,10 @@ void requestHandler()
         {
           downwardsQueue.insert(i);
         }
+        buttonState[1] = 0;
+        buttonState[2] = 0;
+        floorState[i] = 0;
+        //Serial.println(floorState[i]);
       }
       else if(floorState[i] == 2)
       {
@@ -129,12 +117,9 @@ void requestHandler()
         downwardsQueue.insert(i);
         upwardsQueue.insert(i);
       }
+      downwardsQueue.sort();
+      upwardsQueue.sort();
+      downwardsQueue.flip();
     }
   }
-}
-
-void potMeterFloor() { //Turn potmeter to simulate elevator moving up and down
-  potValue = analogRead(A0);
-  currentFloor = (potValue + 100) / 255;
-  //Serial.println(currentFloor);
 }

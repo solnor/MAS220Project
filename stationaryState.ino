@@ -5,10 +5,11 @@ const int CLOSE = 0;
 unsigned int initialTime = 0;
 unsigned int doorTimer = 0;
 //bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
+bool reset = false;
 
 void stationaryState()
 {
-  if(!doorState && arrivedAtFloor)
+  if(!doorState && arrivedAtFloor && !reset)
   {
     initialTime = millis();
     runStepper(OPEN);
@@ -22,13 +23,18 @@ void stationaryState()
     for (int i = 0; i < sizeof(ptrs) / sizeof(ptrs[0]); i++)
     {
       (*ptrs[i]).remove(currentFloor);
+      (*ptrs[i]).sort();
     }
+    downwardsQueue.flip();
     arrivedAtFloor = false;
     clearFloorState();
   }
-  if(doorState && !arrivedAtFloor && millis()-doorTimer>1000)
+  if(doorState && !arrivedAtFloor)
   {
-    runStepper(CLOSE);
+    if(millis() - doorTimer>1000)
+    {
+      runStepper(CLOSE);
+    }
   }
 
   if(!doorState && !arrivedAtFloor)
@@ -43,6 +49,11 @@ void stationaryState()
       stationary = false;
       moving = true;
     }
+  }
+  if(millis() - initialTime > 10000 && currentFloor != 0)
+  {
+    downwardsQueue.insert(0);
+    reset = true;
   }
 }
 // Enable door movement, start timer
