@@ -1,66 +1,80 @@
 #include <motorLib.h>
 #include <Queue.h>
 
-#define outputA 18
-#define outputB 19
-#define button 2
 
-#define phasePin 6
-#define enablePin 7
-#define signal1 21
-#define signal2 20
+unsigned long startTime = 0; // Used to calculate dt
+float dt = 0; // The time it takes for the main loop to run
 
-unsigned long startTime = 0;
-/*
- * 
- * Kommenter på hvorfor dt er initialisert som 10000;
- * 
- */
-float dt = 10000;
-
+// Creating a Motor object which runs the DC-motor.
+const uint8_t phasePin = 6
+            , enablePin = 7
+            , signal1 = 21
+            , signal2 = 20
+            , gearRatio = 131;
 Motor motor(phasePin, enablePin, signal1, signal2);
-const int gearRatio = 131;
 
-Queue upwardsQueue;
-Queue downwardsQueue;
-int queueIterator = 0;
+// Creating two objects from the Queue class. These are used to handle requests
+Queue upwardsQueue
+    , downwardsQueue;
 
-//int floorState[] = {0, 0, 0, 0};
+// Declaration of arrays containing pins used
+const uint8_t buttonPins[] = {29, 28, 27, 26, 25, 24, 23, 22, 18, 19, 2} // All inputs
+            , ledPins[] = {42, 43, 44, 45, 46, 47, 48, 49}; // All LEDs
+uint8_t buttonPinsSize = 0
+      , ledPinsSize = 0;
 
-int buttonPins[] = {29, 28, 27, 26, 25, 24, 23, 22, 18, 19, 2}; // All inputs
-int buttonPinsSize;
-int ledPins[] = {42, 43, 44, 45, 46, 47, 48, 49}; // All outputs
-int ledPinsSize;
+// States
+bool stationary = true
+    , moving = false
+    , movingUp = true;
 
-bool stationary = true;
-bool moving = false;
-bool movingUp = true;
+// Current floor, top and bottom floor
+uint8_t currentFloor = 0
+      , bottomFloor = 0
+      , topFloor = 3;
 
-int desiredFloor = 0;
-float desiredAngle = 0.0; // desired amount of rotation in degrees on the load axle
-bool doorState = false; // 0 for closed, 1 for open. With this value set to 0, it is assumed the door starts off as closed
+int8_t desiredFloor = 0; // Desired floor. Not an unsigned integer since it will be negative if no desired floor is found
+
+float desiredAngle = 0.0 // Desired amount of rotation in degrees on the load axle
+    , degreesPerFloor = 360.0 // Amount of degrees to rotate until next floor is reached. This is arbitrary and can be set to anything.
+    , angleTolerance = 1.5; // The acceptable inaccuracy in the motor in degrees
+
+bool doorOpen = false; // False if closed, true if open. It is assumed the door starts off as closed
+
+bool arrivedAtFloor = false; // Boolean set true when a desired floor is reached
 
 
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
-  pinMode(0, INPUT);
+  // Initializing pins, DC-motor and stepper motor
   initPins();
   initMotor();
   doorStepperInit();
 }
 
-void loop() {
-  startTime = micros();
-  floorSelection();
-  readButtonsSetState();
 
+void loop() 
+{
+  startTime = micros();
+
+  // Checking for internal- and external floor requests
+  internalFloorSelection();
+  externalFloorSelection();
+  externalRequestHandler();
+  // Setting desiredFloor
   desiredFloor = findNextDesiredFloor();
-  if(desiredFloor >= 0 && !doorState)
+  if(desiredFloor >= 0 && !doorOpen)
   {
-    desiredAngle = float(desiredFloor) * 360.0;
+    // Converting desired floor to a desired angle, passing this as an argument to the 
+    // PID controller and setting the duty cycle to the output of the controller
+    desiredAngle = float(desiredFloor) * degreesPerFloor;
     motor.setDutyCycle(PID(desiredAngle));
   }
+  // Displaying the elevator's position with LEDs.
   elevatorIndicator();
+
+  // Running different code based on states
   if(stationary)
   {
     stationaryState();
@@ -68,53 +82,38 @@ void loop() {
   if(moving)
   {
     movingState();
-  }
-  requestHandler();
+  }  
 
-//  if(millis() % 500 == 0)
-//  {
-//    Serial.print("Upwards: ");
-//    for(int i = 0; i < upwardsQueue.getSize(); i++)
-//    {
-//      Serial.print(*(upwardsQueue.getArrayPointer()+i));
-//    }
-//    Serial.print(" downwards: ");
-//    for(int i = 0; i < downwardsQueue.getSize(); i++)
-//    {
-//      Serial.print(*(downwardsQueue.getArrayPointer()+i));
-//    }
-//    Serial.print(" movingUp: ");Serial.print(movingUp);
-//    Serial.println();
-//  }
-  
-  dt = micros() - startTime;
-  dt = dt / (1000000);
+  dt = (micros() - startTime) * pow(10, -6);
 }
 
+
 void initPins()
-{
+{ /* Initializes Arduino Mega 2560 pins */
   buttonPinsSize = sizeof(buttonPins) / sizeof(buttonPins[0]);
   ledPinsSize = sizeof(ledPins) / sizeof(ledPins[0]);
 
-  
-  //Initializes all inputs
+  // Initializes all inputs
   for (int i = 0; i < buttonPinsSize; i++) {
 
     pinMode(buttonPins[i], INPUT);
   }
   
-  //Initializes all outputs
+  // Initializes all outputs
   for (int i = 0; i < ledPinsSize; i++) {
 
     pinMode(ledPins[i], OUTPUT);
   }
 }
 
+
 void initMotor()
-{
+{ /* Initializes DC motor */
+  // Setting up interrupts for the two signals from the DC motor encoder
   attachInterrupt(digitalPinToInterrupt(signal1), signal1Change, CHANGE);
   attachInterrupt(digitalPinToInterrupt(signal2), signal2Change, CHANGE);
+  
   motor.gearRatio = gearRatio;
-  TCCR4B = TCCR4B & 0b11111000 | 0x01;
-  motor.setSpeed(0);
+  // Setting prescaler to one on the ATmega2560, which gives the highest PWM-frequency
+  TCCR4B = 0b00000001;
 }

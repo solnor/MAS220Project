@@ -1,27 +1,34 @@
-//unsigned long startTime = 0;
-//float dt = 10000;
-float thetaDot = 0;
-float accumulatedError = 0;
-float error = 0;
-float theta = 0;
-float thetaPrev = 0;
-float P, I, D;
-float sumOutput;
-float filteredD;
-float kP = 3,  kI = 0, kD = 0.010;
-float PLimit = 40, ILimit = 10,  DLimit = 40;
+float P = 0
+    , I = 0
+    , D = 0;
+    
+float sumOutput = 0;
+
+float filteredD = 0;
+
+// Gains
+float kP = 3
+    , kI = 0.002
+    , kD = 0.010;
+    
+// Maximum contributions from the regulators
+float PLimit = 40
+    , ILimit = 10
+    , DLimit = 40;
+    
+float currentAngle = 0.0
+    , previousAngle = 0.0;
 
 
-int PID(float angleInput) { //Returns a value between 0 and 255;
+int PID(float angleInput) { /* Returns a value between 0 and 255 */
   currentAngle = motor.getAngle();
-  //Turns the motor off when the error is less than 1.5 degrees
-  if(abs(angleInput - currentAngle) < 2.0){
+  // Turns the motor off when the error is less than angle tolerance
+  if(abs(angleInput - currentAngle) < angleTolerance){
     motor.powerOff();
   }else{
   motor.powerOn();
   }
-
-  //PID-calculations:
+  // PID-calculations:
   P = (angleInput - currentAngle) * kP;
   if (P > PLimit) {
     P = PLimit;

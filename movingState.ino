@@ -1,40 +1,33 @@
-  // Start engine, make LEDs light up, etc.
 
-int duty = 127;
-const int countsPerRev = 64;
-float currentAngle = 0.0;
-float previousAngle = 0.0;
 
-int p=0;
-bool arrivedAtFloor = false;
-
-void movingState(){
-  currentFloor = round(motor.getAngle()/360.0);
-  ///////////////////////////////
-  //Temporary:
-  arrivedAtFloor = checkIfArrived();
-  if(arrivedAtFloor && currentFloor == desiredFloor)
+void movingState()
+{ /* Runs while elevator is moving */
+  // Setting currentFloor based on the current motor angle. Rounding to whichever floor is the closest.
+  currentFloor = round(motor.getAngle()/degreesPerFloor);
+  
+  // If the motor is at the desired angle and the elevator is on the desired floor, switch to the stationary state
+  if(checkIfArrived() && currentFloor == desiredFloor)
   {
-      Serial.print("Arrived at floor ");Serial.println(currentFloor+1);
-      p++;
-
-      stationary = true;
-      moving = false;
+    Serial.print("Arrived at floor ");Serial.println(currentFloor+1);
+    arrivedAtFloor = true;
+    stationary = true;
+    moving = false;
   }
-  ///////////////////////////////
 }
 
+
 bool checkIfArrived()
-{
-  if(motor.getAngle() >= desiredAngle - 2.0 && motor.getAngle() <= desiredAngle + 2.0)
+{ /* Returns either true or false based on whether current motor angle is within acceptable limits from the desiredAngle */
+  if(motor.getAngle() >= desiredAngle - angleTolerance && motor.getAngle() <= desiredAngle + angleTolerance)
   {
     return true;
   }
   return false;
 }
 
+
 void elevatorIndicator()
-{
+{ /* Sets pin connected to LED corresponding to current floor to HIGH */
   if(movingUp)
   {
     if(currentFloor != 0)
@@ -54,12 +47,15 @@ void elevatorIndicator()
   }
 }
 
-//ISR
+
+// ISR
 void signal1Change()
-{
+{ /* ISR for changes on signal1 */
   motor.updateCounter(signal1);
 }
+
+
 void signal2Change()
-{
+{ /* ISR for changes on signal2 */
   motor.updateCounter(signal2);
 }
