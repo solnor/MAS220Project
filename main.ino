@@ -24,16 +24,15 @@ uint8_t buttonPinsSize = 0
       , ledPinsSize = 0;
 
 // States
-bool stationary = true
-    , moving = false
-    , movingUp = true;
+bool stationary = true //If true, the elevator is stationary. If false, the elevator is moving
+    , movingUp = true; //If true, the direction of the elevator is upwards, else it's downwards
 
 // Current floor, top and bottom floor
 uint8_t currentFloor = 0
       , bottomFloor = 0
       , topFloor = 3;
 
-int8_t desiredFloor = 0; // Desired floor. Not an unsigned integer since it will be negative if no desired floor is found
+int8_t desiredFloor = -1; // Desired floor. Not an unsigned integer since it will be negative if no desired floor is found
 
 float desiredAngle = 0.0 // Desired amount of rotation in degrees on the load axle
     , degreesPerFloor = 360.0 // Amount of degrees to rotate until next floor is reached. This is arbitrary and can be set to anything.
@@ -61,9 +60,7 @@ void loop()
   // Checking for internal- and external floor requests
   internalFloorSelection();
   externalFloorSelection();
-  externalRequestHandler();
-  // Setting desiredFloor
-  desiredFloor = findNextDesiredFloor();
+  
   if(desiredFloor >= 0 && !doorOpen)
   {
     // Converting desired floor to a desired angle, passing this as an argument to the 
@@ -79,7 +76,7 @@ void loop()
   {
     stationaryState();
   }
-  if(moving)
+  else
   {
     movingState();
   }  

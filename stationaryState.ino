@@ -6,8 +6,6 @@ const int OPEN = 1
 unsigned long initialTime = 0
             , doorTimer = 0;
 
-bool reset = false; // Bool to check whether elevator returns to 1st floor upon request or because of reset
-
 
 void stationaryState()
 { /* Runs while stationary */
@@ -15,20 +13,9 @@ void stationaryState()
   // If the elevator has just reached the desired floor, but hasn't opened the doors:
   if(!doorOpen && arrivedAtFloor)
   {
-    // Doesn't open doors if the elevator has automatically moved to the first floor, but deletes floor from queue.
-    if(reset)
-    {
-      downwardsQueue.remove(currentFloor);
-      downwardsQueue.sort();
-      downwardsQueue.flip();
-      arrivedAtFloor = false;
-    }
-    else
-    {
-      // Starting timer and open doors.
-      initialTime = millis();
-      runStepper(OPEN);
-    }
+    // Starting timer and open doors.
+    initialTime = millis();
+    runStepper(OPEN);
   }
   
   if(doorOpen && arrivedAtFloor)
@@ -59,22 +46,21 @@ void stationaryState()
   // Finding next floor to go to after door is closed and switching states
   if(!doorOpen && !arrivedAtFloor)
   {
+    // Setting desiredFloor
+    desiredFloor = findNextDesiredFloor();
     if(desiredFloor == currentFloor)
     {
       arrivedAtFloor = true;
     }
     else if (desiredFloor > -1)
     {
-      reset = false;
       stationary = false;
-      moving = true;
     }
   }
   // If no requests has been made within 10 seconds, the elevator will return to floor zero
   if(millis() - initialTime > 10000 && currentFloor != 0)
   {
     downwardsQueue.insert(0);
-    reset = true;
   }
 }
 
@@ -105,7 +91,7 @@ int findNextDesiredFloor()
     // The function returns the first queue elements that meets the requirement
     if(multiplier * *((*queuePointer).getArrayPointer()+i) >= multiplier * currentFloor)
     {
-      return *((*queuePointer).getArrayPointer()+i);;
+      return *((*queuePointer).getArrayPointer()+i);
     }
   }
   // If no queue element is found, -1 is returned

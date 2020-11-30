@@ -11,7 +11,6 @@ void movingState()
     Serial.print("Arrived at floor ");Serial.println(currentFloor+1);
     arrivedAtFloor = true;
     stationary = true;
-    moving = false;
   }
 }
 

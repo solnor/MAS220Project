@@ -47,6 +47,9 @@ void externalFloorSelection() { /* Checks for external floor requests */
     buttonState[5] = 1; // The "down"-button on floor 3
   }
   floorState[3] = buttonState[5];
+
+  
+  externalRequestHandler();
 }
 
 
@@ -87,7 +90,7 @@ void externalRequestHandler()
       if(floorState[floor] == 1)
       {
         // If the requested floor is above the largest value in the upwards queue, the elevator has to ascend to get to it
-        if(upwardsQueue.getHighestValue() < floor)
+        if(upwardsQueue.getHighestValue() < floor && currentFloor < floor /*SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS*/)
         {
           upwardsQueue.insert(floor);
         }
@@ -100,7 +103,7 @@ void externalRequestHandler()
       else if(floorState[floor] == 2)
       {
         // If the requested floor is below the lowest value in the downwards queue, the elevator has to descend to get to it
-        if(downwardsQueue.getLowestValue() > floor)
+        if(downwardsQueue.getLowestValue() > floor && currentFloor > floor)
         {
           downwardsQueue.insert(floor);
         }
