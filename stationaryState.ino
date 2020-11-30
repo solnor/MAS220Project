@@ -38,7 +38,7 @@ void stationaryState()
   
   if(doorOpen && !arrivedAtFloor)
   {
-    if(millis() - doorTimer>1000)
+    if(millis() - doorTimer>3000)
     {
       runStepper(CLOSE);
     }
@@ -58,7 +58,7 @@ void stationaryState()
     }
   }
   // If no requests has been made within 10 seconds, the elevator will return to floor zero
-  if(millis() - initialTime > 10000 && currentFloor != 0)
+  if(millis() - initialTime > 15000 && currentFloor != 0)
   {
     downwardsQueue.insert(0);
   }
